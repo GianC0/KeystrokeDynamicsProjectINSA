@@ -66,8 +66,7 @@ print("⣿ 1 - Alan                                  ⣿⣿⣿⣿⣿⣿⣿⣿⣿
 print("⣿ 2 - Natasha                               ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
 print("⣿ 3 - Joel                                  ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
 print("⣿ 4 - Giancarlo                             ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-print("⣿ 5 - Marcus                                ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-print(" 5 - Russian or Chinese hacker             ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
+print("⣿ 5 - Russian or Chinese hacker             ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
 print("""⣿⣿⣿⣿⣿⡏⠉⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣿⣿⣿⣿⠀⠀⠀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⠉⠁⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣿⣿⣿⣿⣧⡀⠀⠀⠀⠀⠙⠿⠿⠿⠻⠿⠿⠟⠿⠛⠉⠀⠀⠀⠀⠀⣸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
@@ -83,7 +82,7 @@ print()
 
 nr = input()
 
-pokemons = ["Alan", "Natasha", "Joel", "Giancarlo", "Marcus", "Russian_or_Chinese_hacker"]
+pokemons = ["Alan", "Natasha", "Joel", "Giancarlo", "Russian_or_Chinese_hacker"]
 
 pokemon = pokemons[int(nr) - 1]
 log_dir = "CollectedData/" + pokemon + "/"
@@ -102,3 +101,4 @@ for array in data:
         item[0] -= start_timestamp
         # log = [str(item[0]), str(item[1]), item[2]]
         logging.info(str(item[0]) + ', ' + str(item[1]) + ', ' + item[2])
+
