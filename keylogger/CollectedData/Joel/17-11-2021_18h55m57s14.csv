@@ -1,0 +1,8 @@
+0, Key.shift, PRESS
+74, 'T', PRESS
+167, Key.shift, RELEASE
+169, 'h', PRESS
+169, 't', RELEASE
+228, 'h', RELEASE
+326, 'r', PRESS
+388, 'r', RELEASE

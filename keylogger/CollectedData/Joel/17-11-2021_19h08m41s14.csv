@@ -1,0 +1,14 @@
+0, Key.shift, PRESS
+137, 'T', PRESS
+196, Key.shift, RELEASE
+213, 't', RELEASE
+230, 'h', PRESS
+291, 'h', RELEASE
+376, 'e', PRESS
+462, Key.space, PRESS
+462, 'e', RELEASE
+542, Key.space, RELEASE
+660, 'q', PRESS
+745, 'q', RELEASE
+1652, Key.tab, PRESS
+1747, Key.tab, RELEASE
