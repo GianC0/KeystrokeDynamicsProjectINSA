@@ -1,6 +1,32 @@
 import csv
 import os
 
+def pretty_case(item):
+    resulting_string = ""
+    for event in item:
+        if event[2].endswith("PRESS"):
+            resulting_string += event[1][2] if event[1].endswith("'") else " "
+    return resulting_string
+
+def item_is_correct(item):
+    return pretty_case(item).casefold() == "the quick brown fox jumps over the lazy dog.".casefold()
+
+
+def delete_special_keys(item):
+    new_item = []
+    for event in item:
+        if event[1].startswith(" Key") and not event[1].endswith("space"):
+            continue
+        new_item.append(event)
+    return new_item
+
+def update_time(item):
+    start_time = int(item[0][0])
+    for event in item:
+        new_time = int(event[0]) - start_time
+        event[0] = new_time
+    return item
+
 def transform_data_to_array():
     all_data = {}
     for folder in os.listdir("CollectedData/"):
@@ -9,7 +35,10 @@ def transform_data_to_array():
         for file in os.listdir(path):
             with open(path + file) as csvfile:
                 pokemon_item = list(csv.reader(csvfile))
-                pokemon_data.append(pokemon_item)
+                pokemon_item = delete_special_keys(pokemon_item)
+                pokemon_item = update_time(pokemon_item)
+                if item_is_correct(pokemon_item):
+                    pokemon_data.append(pokemon_item)
         all_data[folder] = pokemon_data
     return all_data # Format: {user: collected_data}, collected_data: [experiment], experiment: [data_sample], data_sample: [timestamp, character, action]
 
@@ -35,7 +64,7 @@ def get_hold_time_array(data):
         key_pressed_timestamp = int(key_pressed[0])
         for j in range(i+1, len(data)):
             key_released = data[j]
-            if key_pressed[1] == key_released[1] and key_released[2].endswith("RELEASE"):
+            if key_pressed[1].casefold() == key_released[1].casefold() and key_released[2].endswith("RELEASE"):
                 key_released_timestamp = int(key_released[0])
                 hold_time_array.append(key_released_timestamp - key_pressed_timestamp)
                 break
@@ -48,11 +77,9 @@ def get_release_press_array_magically(data):
         key_to_release = data[i]
         if key_to_release[2].endswith("RELEASE"):
             continue
-        released_key_position = 0
         for j in range(i+1, len(data)):
-            if key_to_release[1] == data[j][1] and data[j][2].endswith("RELEASE"):
+            if key_to_release[1].casefold() == data[j][1].casefold() and data[j][2].endswith("RELEASE"):
                 released_key = data[j]
-                released_key_position = j
                 break
         char_found = False
         for j in range(i+1, len(data)):
@@ -74,6 +101,7 @@ def count_backspace(data):
             count += 1
     return count
 
+
 raw_data = transform_data_to_array()
 processed_data = {}
 for user in raw_data:
@@ -82,20 +110,30 @@ for user in raw_data:
         "press_press": [],
         "release_press": [],
         "release_release": [],
-        "baskspace": []
+        "raw_data": []
     }
     for collected_data in raw_data[user]:
         processed_data[user]["press_press"].append(get_event_array(collected_data, "PRESS"))
         processed_data[user]["release_release"].append(get_event_array(collected_data, "RELEASE"))
         processed_data[user]["hold_time"].append(get_hold_time_array(collected_data))
         processed_data[user]["release_press"].append(get_release_press_array_magically(collected_data))
-        processed_data[user]["baskspace"].append(count_backspace(collected_data))
+        processed_data[user]["raw_data"].append(collected_data)
 
 #def get_hold_array():
 #print(len(processed_data['Alan']['hold_time'][0]))
-print(len(processed_data["Russian_or_Chinese_hacker"]["hold_time"][0]))
-print(len(processed_data["Russian_or_Chinese_hacker"]["press_press"][0]))
-print(len(processed_data["Russian_or_Chinese_hacker"]["release_press"][0]))
-print(len(processed_data["Russian_or_Chinese_hacker"]["release_release"][0]))
-print(processed_data["Russian_or_Chinese_hacker"]["baskspace"][0])
+for user in processed_data:
+    print(user)
+    for item in processed_data[user]:
+        print(f"\t{item}:", end=" ")
+        for case in processed_data[user][item]:
+            print(len(case), end=", ")
+        print("\b\b")
+
+
+#print(processed_data["Alan"]["raw_data"][0],end="\n\n")
+#print(processed_data["Joel"]["raw_data"][0])
+# print(len(processed_data["Russian_or_Chinese_hacker"]["hold_time"][0]))
+# print(len(processed_data["Russian_or_Chinese_hacker"]["press_press"][0]))
+# print(len(processed_data["Russian_or_Chinese_hacker"]["release_press"][0]))
+# print(len(processed_data["Russian_or_Chinese_hacker"]["release_release"][0]))
 
