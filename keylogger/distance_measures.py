@@ -7,10 +7,6 @@ from sklearn.neighbors import DistanceMetric
 import numpy as np
 
 
-def x():
-    pass
-
-
 def get_unordered_absolut_data():
     raw_data = transform_data_to_array()
     processed_data = {}
@@ -41,12 +37,21 @@ def filter_faulty_sequences(p_data, target_chars=44):
     return p_data
 
 
+def produce_merged_models(p_data):
+    models = {}
+    for user in p_data:
+        model = pd.DataFrame(p_data[user]).mean().values
+        models[user] = model
+    return models
+
+
 def produce_models(p_data):
     models = {}
     for user in p_data:
+        models[user] = {}
         for metric_type in p_data[user]:
             model = pd.DataFrame(p_data[user][metric_type]).mean().values
-            models[user] = model
+            models[user][metric_type] = model
     return models
 
 
@@ -77,7 +82,8 @@ def get_eer(distance_user, distance_intruder):
     return eer1
 
 
-if __name__ == '__main__':
+def compare_disjunct():
+
     processed_data = get_unordered_absolut_data()
 
     filtered_data = filter_faulty_sequences(processed_data)
@@ -92,7 +98,7 @@ if __name__ == '__main__':
             results[user_m][user_d] = {}
             for metric in filtered_data[user_d]:
                 data = filtered_data[user_d][metric]
-                distance = get_distance(model, data, "manhattan")
+                distance = get_distance(model[metric], data, "manhattan")
                 results[user_m][user_d][metric] = distance
                 # print("{}; {}; {} > {}".format(user_m, user_d, metric, distance.mean()))
 
@@ -112,4 +118,51 @@ if __name__ == '__main__':
         for metric in distances_user[user]:
             eer = get_eer(np.array(distances_user[user][metric]), np.concatenate(distances_intruder[user][metric]))
             print("User: {}; Metric: {} > EER: {}".format(user, metric, eer))
+
+
+def merge_data(p_data):
+    merged_userdata = {}
+    for user in p_data:
+        merged_metrics = []
+        for i, d in enumerate(p_data["hold_time"]):
+            unified = np.concatenate([p_data[user]["hold_time"][i], p_data[user]["press_press"][i], p_data[user]["release_press"][i], p_data[user]["release_release"][i]])
+            merged_metrics.append(unified)
+        merged_userdata[user] = np.array(merged_metrics)
+    return merged_userdata
+
+
+def compare_unified():
+    processed_data = get_unordered_absolut_data()
+
+    merged_data = merge_data(processed_data)
+
+    models = produce_merged_models(merged_data)
+
+    results = {}
+    for user_m in models:
+        results[user_m] = {}
+        model = models[user_m]
+        for user_d in merged_data:
+            data = merged_data[user_d]
+            distance = get_distance(model, data, "manhattan")
+            results[user_m][user_d] = distance
+            # print("{}; {}; {} > {}".format(user_m, user_d, metric, distance.mean()))
+
+    distances_intruder = {}
+    distances_user = {}
+    for user_m in results:
+        distances_intruder[user_m] = []
+        for user_d in results[user_m]:
+            if user_m == user_d:
+                distances_user[user_m] = results[user_m][user_d]
+            else:
+                distances_intruder[user_m].append(results[user_m][user_d])
+    for user in distances_user:
+        for metric in distances_user[user]:
+            eer = get_eer(np.array(distances_user[user][metric]), np.concatenate(distances_intruder[user][metric]))
+            print("User: {}; Metric: {} > EER: {}".format(user, metric, eer))
+
+
+if __name__ == '__main__':
+    compare_disjunct()
     print("Finished")
