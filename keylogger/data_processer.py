@@ -105,48 +105,6 @@ def count_backspace(data):
             count += 1
     return count
 
-raw_data = transform_data_to_array()
-processed_data = {}
-for user in raw_data:
-    processed_data[user] = {
-        "hold_time": [],
-        "press_press": [],
-        "release_press": [],
-        "release_release": [],
-        "raw_data": []
-    }
-    for collected_data in raw_data[user]:
-        processed_data[user]["press_press"].append(get_event_array(collected_data, "PRESS"))
-        processed_data[user]["release_release"].append(get_event_array(collected_data, "RELEASE"))
-        processed_data[user]["hold_time"].append(get_hold_time_array(collected_data))
-        processed_data[user]["release_press"].append(get_release_press_array_magically(collected_data))
-        processed_data[user]["raw_data"].append(collected_data)
-
-#def get_hold_array():
-#print(len(processed_data['Alan']['hold_time'][0]))
-total = 0
-for user in processed_data:
-    user_total = 0
-    print(user)
-    for item in processed_data[user]:
-        print(f"\t{item}:", end=" ")
-        for case in processed_data[user][item]:
-            print(len(case), end=", ")
-        print("\b\b")
-    user_total = len(processed_data[user]["raw_data"])
-    print(f"\tTotal cases: {user_total}")
-    total += user_total
-print(f"Total cases: {total}")
-
-
-
-#print(processed_data["Alan"]["raw_data"][0],end="\n\n")
-#print(processed_data["Joel"]["raw_data"][0])
-# print(len(processed_data["Russian_or_Chinese_hacker"]["hold_time"][0]))
-# print(len(processed_data["Russian_or_Chinese_hacker"]["press_press"][0]))
-# print(len(processed_data["Russian_or_Chinese_hacker"]["release_press"][0]))
-# print(len(processed_data["Russian_or_Chinese_hacker"]["release_release"][0]))
-
 def get_processed_data():
     raw_data = transform_data_to_array()
     processed_data = {}
@@ -156,27 +114,29 @@ def get_processed_data():
             "press_press": [],
             "release_press": [],
             "release_release": [],
-            "baskspace": []
+            "raw_data": []
         }
         for collected_data in raw_data[user]:
             processed_data[user]["press_press"].append(get_event_array(collected_data, "PRESS"))
             processed_data[user]["release_release"].append(get_event_array(collected_data, "RELEASE"))
             processed_data[user]["hold_time"].append(get_hold_time_array(collected_data))
             processed_data[user]["release_press"].append(get_release_press_array_magically(collected_data))
-            processed_data[user]["baskspace"].append(count_backspace(collected_data))
-
-    # def get_hold_array():
-    # print(len(processed_data['Alan']['hold_time'][0]))
-    # print(len(processed_data["Russian_or_Chinese_hacker"]["hold_time"][0]))
-    # print(len(processed_data["Russian_or_Chinese_hacker"]["press_press"][0]))
-    # print(len(processed_data["Russian_or_Chinese_hacker"]["release_press"][0]))
-    # print(len(processed_data["Russian_or_Chinese_hacker"]["release_release"][0]))
-    # print(processed_data["Russian_or_Chinese_hacker"]["baskspace"][0])
-
-    # print(processed_data)
-    # for processed_data
-
+            processed_data[user]["raw_data"].append(collected_data)
     return processed_data
 
 
-get_processed_data()
+if __name__ == "__main__":
+    processed_data = get_processed_data()
+    total = 0
+    for user in processed_data:
+        user_total = 0
+        print(user)
+        for item in processed_data[user]:
+            print(f"\t{item}:", end=" ")
+            for case in processed_data[user][item]:
+                print(len(case), end=", ")
+            print("\b\b")
+        user_total = len(processed_data[user]["raw_data"])
+        print(f"\tTotal cases: {user_total}")
+        total += user_total
+    print(f"Total cases: {total}")
