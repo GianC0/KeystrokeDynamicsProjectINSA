@@ -116,6 +116,8 @@ def compare_disjunct():
                     distances_intruder[user_m][metric].append(results[user_m][user_d][metric])
     for user in distances_user:
         for metric in distances_user[user]:
+            print(len(distances_user[user][metric]))
+            print(len(np.concatenate(distances_intruder[user][metric])))
             eer = get_eer(np.array(distances_user[user][metric]), np.concatenate(distances_intruder[user][metric]))
             print("User: {}; Metric: {} > EER: {}".format(user, metric, eer))
 
@@ -158,9 +160,8 @@ def compare_unified():
             else:
                 distances_intruder[user_m].append(results[user_m][user_d])
     for user in distances_user:
-        for metric in distances_user[user]:
-            eer = get_eer(np.array(distances_user[user][metric]), np.concatenate(distances_intruder[user][metric]))
-            print("User: {}; Metric: {} > EER: {}".format(user, metric, eer))
+        eer = get_eer(np.array(distances_user[user]), np.concatenate(distances_intruder[user]))
+        print("User: {} > EER: {}".format(user, eer))
 
 
 if __name__ == '__main__':
