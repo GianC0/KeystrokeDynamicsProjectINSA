@@ -124,13 +124,20 @@ for user in raw_data:
 
 #def get_hold_array():
 #print(len(processed_data['Alan']['hold_time'][0]))
+total = 0
 for user in processed_data:
+    user_total = 0
     print(user)
     for item in processed_data[user]:
         print(f"\t{item}:", end=" ")
         for case in processed_data[user][item]:
             print(len(case), end=", ")
         print("\b\b")
+    user_total = len(processed_data[user]["raw_data"])
+    print(f"\tTotal cases: {user_total}")
+    total += user_total
+print(f"Total cases: {total}")
+
 
 
 #print(processed_data["Alan"]["raw_data"][0],end="\n\n")
