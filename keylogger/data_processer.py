@@ -1,5 +1,7 @@
 import csv
 import os
+import pandas as pd
+
 
 def pretty_case(item):
     resulting_string = ""
@@ -7,6 +9,7 @@ def pretty_case(item):
         if event[2].endswith("PRESS"):
             resulting_string += event[1][2] if event[1].endswith("'") else " "
     return resulting_string
+
 
 def item_is_correct(item):
     return pretty_case(item).casefold() == "the quick brown fox jumps over the lazy dog.".casefold()
@@ -20,12 +23,14 @@ def delete_special_keys(item):
         new_item.append(event)
     return new_item
 
+
 def update_time(item):
     start_time = int(item[0][0])
     for event in item:
         new_time = int(event[0]) - start_time
         event[0] = new_time
     return item
+
 
 def transform_data_to_array():
     all_data = {}
@@ -105,6 +110,7 @@ def count_backspace(data):
             count += 1
     return count
 
+
 def get_processed_data():
     raw_data = transform_data_to_array()
     processed_data = {}
@@ -122,6 +128,12 @@ def get_processed_data():
             processed_data[user]["hold_time"].append(get_hold_time_array(collected_data))
             processed_data[user]["release_press"].append(get_release_press_array_magically(collected_data))
             processed_data[user]["raw_data"].append(collected_data)
+        keys_pressed = list("the quick brown fox jumps over the lazy dog.")
+        inter_keys = ["t-h", "h-e", "e- ", " -q", "q-u", "u-i", "i-c", "c-k", "k- ", " -b", "b-r", "r-o", "o-w", "w-n", "n- ", " -f", "f-o", "o-x", "x- ", " -j", "j-u", "u-m", "m-p", "p-s", "s- ", " -o", "o-v", "v-e", "e-r", "r- ", " -t", "t-h", "h-e", "e- ", " -l", "l-a", "a-z", "z-y", "y- ", " -d", "d-o", "o-g", "g-."]
+        processed_data[user]["hold_time_df"] = pd.DataFrame(processed_data[user]["hold_time"], columns=keys_pressed)
+        processed_data[user]["press_press_df"] = pd.DataFrame(processed_data[user]["press_press"], columns=inter_keys)
+        processed_data[user]["release_release_df"] = pd.DataFrame(processed_data[user]["release_release"], columns=inter_keys)
+        processed_data[user]["release_press_df"] = pd.DataFrame(processed_data[user]["release_press"], columns=inter_keys)
     return processed_data
 
 
