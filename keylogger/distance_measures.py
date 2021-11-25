@@ -68,7 +68,7 @@ def get_eer(distance_user, distance_intruder):
     labels = np.concatenate([labels_user, labels_intruder])
     distances = np.concatenate([distance_user, distance_intruder])
 
-    fpr, tpr, threshold = metrics.roc_curve(y_true=labels, y_score=distances)
+    fpr, tpr, threshold = metrics.roc_curve(y_true=labels, y_score=distances, drop_intermediate=False)
     fnr = 1 - tpr
     eer1 = fpr[np.nanargmin(np.absolute((fnr - fpr)))]
     eer2 = fnr[np.nanargmin(np.absolute((fnr - fpr)))]
@@ -101,19 +101,19 @@ def compare_disjunct(data, user="Joel"):
         print("User: {}; Metric: {} > EER: {}".format(user, metric, eer))
 
 
-def merge_data(p_data):
-    merged_userdata = {}
-    for user in p_data:
-        merged_metrics = []
-        for i, d in enumerate(p_data[user]["hold_time"]):
-            unified = np.concatenate([p_data[user]["hold_time"][i], p_data[user]["press_press"][i], p_data[user]["release_press"][i], p_data[user]["release_release"][i]])
-            merged_metrics.append(unified)
-        merged_userdata[user] = np.array(merged_metrics)
-    return merged_userdata
+# def merge_data(p_data):
+#     merged_userdata = {}
+#     for user in p_data:
+#         merged_metrics = []
+#         for i, d in enumerate(p_data[user]["hold_time"]):
+#             unified = np.concatenate([p_data[user]["hold_time"][i], p_data[user]["press_press"][i], p_data[user]["release_press"][i], p_data[user]["release_release"][i]])
+#             merged_metrics.append(unified)
+#         merged_userdata[user] = np.array(merged_metrics)
+#     return merged_userdata
 
 
 def compare_unified(data_unmerged, user="Joel"):
-    data = merge_data(data_unmerged)
+    data, _ = merge_data_with_split(data_unmerged)
     model = produce_merged_model(data, user)
 
     distances_intruder = []
@@ -132,7 +132,38 @@ def compare_unified(data_unmerged, user="Joel"):
     print("User: {}; Metric: {} > EER: {}".format(user, "Merged", eer))
 
 
+def merge_data_with_split(p_data, split_off=0, random_split=False):
+    merged_userdata = {}
+    for user in p_data:
+        merged_metrics = []
+        for i, d in enumerate(p_data[user]["hold_time"]):
+            unified = np.concatenate([p_data[user]["hold_time"][i], p_data[user]["press_press"][i], p_data[user]["release_press"][i], p_data[user]["release_release"][i]])
+            merged_metrics.append(unified)
+        merged_userdata[user] = np.array(merged_metrics)
+    merged_unknown_userdata = {}
+    for user in merged_userdata:
+        o_size = len(merged_userdata[user])
+        merged_unknown_userdata[user] = merged_userdata[user][:split_off]
+        merged_userdata[user] = merged_userdata[user][split_off:]
+        if o_size != len(merged_unknown_userdata[user]) + len(merged_userdata[user]):
+            print("ERROR: Splitting merged data resulted in length mismatch > Check dimensions of used data")
+    return merged_userdata, merged_unknown_userdata
+
+
+def get_user(data_unmerged):
+    data = merge_data_with_split(data_unmerged, split_off=5)
+
+    models = {
+        "Joel": produce_merged_model(data, "Joel"),
+        "Alan": produce_merged_model(data, "Alan"),
+        "Giancarlo": produce_merged_model(data, "Giancarlo"),
+        "Natasha": produce_merged_model(data, "Natasha")
+    }
+
+
 if __name__ == '__main__':
     p_data = get_processed_data()
     compare_unified(p_data)
+
+    #get_user(p_data)
     print("Finished")
