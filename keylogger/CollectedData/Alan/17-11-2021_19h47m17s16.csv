@@ -1,0 +1,10 @@
+0, 't', PRESS
+94, 'h', PRESS
+94, 't', RELEASE
+156, 'e', PRESS
+171, 'h', RELEASE
+248, Key.space, PRESS
+248, 'e', RELEASE
+407, Key.space, RELEASE
+408, 'u', PRESS
+509, 'u', RELEASE

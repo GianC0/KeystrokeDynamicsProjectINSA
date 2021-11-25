@@ -1,0 +1,8 @@
+0, 'q', PRESS
+109, 'q', RELEASE
+141, 'y', PRESS
+142, 'u', PRESS
+200, 'i', PRESS
+200, 'y', RELEASE
+200, 'u', RELEASE
+294, 'i', RELEASE
