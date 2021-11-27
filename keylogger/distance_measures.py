@@ -168,11 +168,23 @@ def get_user(data_unmerged, i_data, split_off, random_split, metrics_tu, d_measu
 
 
 # Method to use for online keylogging
-# Input: - One keylogged line corresponding to 'The quick brown fox jumps over the lazy dog.'
-# - The username of the tipper
-def get_user_online():
+# Input:
+# - One keylogged line corresponding to 'The quick brown fox jumps over the lazy dog.'.
+#       > Formated as in data_processor.get_processed_data()
+# - (Opt) The distance threshold for an entry to be an intruder. Standard is ignoring intruder detection.
+# - (Opt) The distance measure to use.
+# - (Opt) The metrics of the entry to utilize. Standard is 'hold_time'.
+def get_user_online(entry, intruder_threshold=100000, d_measure="manhattan", metrics_tu=None):
+    if metrics_tu is None:
+        metrics_tu = ["hold_time"]
     data = get_processed_data()
     data.pop("Russian_or_Chinese_hacker")
+    model_data, _ = merge_data_with_split(data, split_off=0, random_split=False, metrics_tu=metrics_tu)
+    models = {}
+    for user in model_data:
+        models[user] = produce_merged_model(model_data, user)
+    est_user, min_distance = estimate_single_user(models, entry, d_measure, intruder_threshold)
+    return est_user
 
 
 if __name__ == '__main__':
@@ -183,7 +195,7 @@ if __name__ == '__main__':
     random_test_sampling = True
     metrics_to_use = ['hold_time']
     distance_measure = "manhattan"  # 'manhattan' or 'euclidean'
-    intruder_threshold = 700
+    intruder_distance_threshold = 700
 
     # Data
     u_data = get_processed_data()
@@ -195,7 +207,7 @@ if __name__ == '__main__':
     elif to_run == "disjunct":
         compare_disjunct(u_data, on_model)
     elif to_run == "offline_user_detection":
-        correct_user_est, false_user_est, false_pos_intruder_est, correct_intruder_est, false_pos_users, mean_user_dist, mean_intruder_dist = get_user(u_data, intruder_data, nmbr_test_data, random_test_sampling, metrics_to_use, distance_measure, intruder_threshold)
+        correct_user_est, false_user_est, false_pos_intruder_est, correct_intruder_est, false_pos_users, mean_user_dist, mean_intruder_dist = get_user(u_data, intruder_data, nmbr_test_data, random_test_sampling, metrics_to_use, distance_measure, intruder_distance_threshold)
         print("Correct user identification: {} out of {}".format(correct_user_est, nmbr_test_data*len(u_data.keys())))
         print("False user identifications: {}; From these: {} were mislabeled as intruders".format(false_user_est, false_pos_intruder_est))
         print("Correct intruder identifications: {}".format(correct_intruder_est))
