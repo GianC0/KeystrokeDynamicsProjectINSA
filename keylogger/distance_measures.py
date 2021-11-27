@@ -7,10 +7,12 @@ from sklearn.neighbors import DistanceMetric
 import numpy as np
 import random
 
+intruder_username = "intruders"
+
 
 def produce_merged_model(data, user):
     if len(data[user]) == 0:
-        print("ERROR: model data is empty > Results are wrong") #Todo: Handle
+        print("ERROR: model data is empty > Results are wrong")  # Todo: Handle
     model = pd.DataFrame(data[user]).mean().values
     return model
 
@@ -39,7 +41,7 @@ def get_eer(distance_user, distance_intruder):
     fnr = 1 - tpr
     eer1 = fpr[np.nanargmin(np.absolute((fnr - fpr)))]
     eer2 = fnr[np.nanargmin(np.absolute((fnr - fpr)))]
-    if np.absolute(eer1-eer2) > 0.01:
+    if np.absolute(eer1 - eer2) > 0.01:
         print("ERROR eer1: {} and eer2: {} diverging".format(eer1, eer2))
     return eer1
 
@@ -47,8 +49,8 @@ def get_eer(distance_user, distance_intruder):
 def compare_disjunct(data, user="Joel"):
     models = produce_models(data, user)
 
-    distances_user = {} # User distances by metric
-    distances_intruder = {} # Intruder distances by metric
+    distances_user = {}  # User distances by metric
+    distances_intruder = {}  # Intruder distances by metric
     for user_d in data:
         for metric in data[user_d]:
             if metric != "raw_data":
@@ -112,33 +114,57 @@ def compare_unified(data_unmerged, user="Joel"):
     print("User: {}; Metric: {} > EER: {}".format(user, "Merged", eer))
 
 
-def estimate_single_user(models, entry, d_measure):
+def estimate_single_user(models, entry, d_measure, intruder_threshold):
     distances = {}
     for user in models:
         distances[user] = get_distance(models[user], entry.reshape(1, len(entry)), d_measure)
     determined_user, min_distance = min(distances.items(), key=lambda dist: dist[1])
-    print(min_distance)
-    return determined_user
+    if min_distance > intruder_threshold:
+        determined_user = intruder_username
+    return determined_user, min_distance
 
 
-def get_user(data_unmerged, split_off, random_split, metrics_tu, d_measure):
+def get_user(data_unmerged, i_data, split_off, random_split, metrics_tu, d_measure, intruder_threshold):
     model_data, test_data = merge_data_with_split(data_unmerged, split_off, random_split, metrics_tu)
-
+    intruder_test_data, _ = merge_data_with_split(i_data, metrics_tu=metrics_tu)
     models = {}
-    correct_est = 0
-    false_est = 0
     for user in model_data:
         models[user] = produce_merged_model(model_data, user)
 
+    correct_user_est = 0
+    false_user_est = 0
+    false_pos_intruder_est = 0
+    correct_intruder_est = 0
+    mean_user_dist = []
+    mean_intruder_dist = []
+    false_pos_users = []
     for user in test_data:
         for entry in test_data[user]:
-            est_user = estimate_single_user(models, entry, d_measure)
+            est_user, min_distance = estimate_single_user(models, entry, d_measure, intruder_threshold)
+            mean_user_dist.append(min_distance)
             if est_user == user:
-                correct_est += 1
+                correct_user_est += 1
             else:
-                false_est += 1
-    print(correct_est)
-    print(false_est)
+                false_user_est += 1
+                if est_user == intruder_username:
+                    false_pos_intruder_est += 1
+    mean_user_dist = np.array(mean_user_dist).mean()
+
+    for user in intruder_test_data:
+        for entry in intruder_test_data[user]:
+            # print("DEBUG")
+            # for user_m in models:
+            #     print(get_distance(models[user_m], entry.reshape(1, len(entry)), d_measure))
+            est_user, min_distance = estimate_single_user(models, entry, d_measure, intruder_threshold)
+            mean_intruder_dist.append(min_distance)
+            if est_user == intruder_username:
+                correct_intruder_est += 1
+            else:
+                false_pos_users.append(est_user)
+    mean_intruder_dist = np.array(mean_intruder_dist).mean()
+
+    return correct_user_est, false_user_est, false_pos_intruder_est, correct_intruder_est, false_pos_users, \
+        mean_user_dist, mean_intruder_dist
 
 
 # Method to use for online keylogging
@@ -157,10 +183,11 @@ if __name__ == '__main__':
     random_test_sampling = True
     metrics_to_use = ['hold_time']
     distance_measure = "manhattan"  # 'manhattan' or 'euclidean'
+    intruder_threshold = 700
 
     # Data
     u_data = get_processed_data()
-    u_data.pop("Russian_or_Chinese_hacker")
+    intruder_data = {intruder_username: u_data.pop("Russian_or_Chinese_hacker")}
 
     # Analysis
     if to_run == "unified":
@@ -168,8 +195,14 @@ if __name__ == '__main__':
     elif to_run == "disjunct":
         compare_disjunct(u_data, on_model)
     elif to_run == "offline_user_detection":
-        get_user(u_data, nmbr_test_data, random_test_sampling, metrics_to_use, distance_measure)
-
+        correct_user_est, false_user_est, false_pos_intruder_est, correct_intruder_est, false_pos_users, mean_user_dist, mean_intruder_dist = get_user(u_data, intruder_data, nmbr_test_data, random_test_sampling, metrics_to_use, distance_measure, intruder_threshold)
+        print("Correct user identification: {} out of {}".format(correct_user_est, nmbr_test_data*len(u_data.keys())))
+        print("False user identifications: {}; From these: {} were mislabeled as intruders".format(false_user_est, false_pos_intruder_est))
+        print("Correct intruder identifications: {}".format(correct_intruder_est))
+        print("Missed intruders: {}".format(len(false_pos_users)))
+        print("... those were mislabeled as: {}".format(" ".join(false_pos_users)))
+        print("Mean distance of user entries: {}".format(mean_user_dist))
+        print("Mean distance of intruder entries: {}".format(mean_intruder_dist))
     print("Finished")
 
 # TODO: Determine possible distance threshold for outsider class
