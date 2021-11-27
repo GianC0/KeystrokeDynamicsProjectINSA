@@ -5,64 +5,31 @@ from data_processer import transform_data_to_array, get_event_array, get_hold_ti
 import pandas as pd
 from sklearn.neighbors import DistanceMetric
 import numpy as np
+import random
 
 
-# def get_unordered_absolut_data():
-#     raw_data = transform_data_to_array()
-#     processed_data = {}
-#     for user in raw_data:
-#         if user == "Russian_or_Chinese_hacker":
-#             continue
-#         processed_data[user] = {
-#             "hold_time": [],
-#             "press_press": [],
-#             "release_press": [],
-#             "release_release": []
-#         }
-#         for collected_data in raw_data[user]:
-#             processed_data[user]["press_press"].append(get_event_array(collected_data, "PRESS"))
-#             processed_data[user]["release_release"].append(get_event_array(collected_data, "RELEASE"))
-#             processed_data[user]["hold_time"].append(get_hold_time_array(collected_data))
-#             processed_data[user]["release_press"].append(get_release_press_array_magically(collected_data))
-#     return processed_data
-
-
-def filter_faulty_sequences(p_data, target_chars=44):
-    for user in p_data:
-        for metric_type in p_data[user]:
-            print("{}; {} > Original size: {}".format(user, metric_type, len(p_data[user][metric_type])))
-            p_data[user][metric_type][:] = np.array([d for d in p_data[user][metric_type] if not len(d) != target_chars])
-            p_data[user][metric_type] = np.array(p_data[user][metric_type])
-            print("{}; {} > Cleaned size: {}".format(user, metric_type, len(p_data[user][metric_type])))
-    return p_data
-
-
-def produce_merged_model(p_data, user):
-    model = pd.DataFrame(p_data[user]).mean().values
+def produce_merged_model(data, user):
+    if len(data[user]) == 0:
+        print("ERROR: model data is empty > Results are wrong") #Todo: Handle
+    model = pd.DataFrame(data[user]).mean().values
     return model
 
 
-def produce_models(p_data, user):
+def produce_models(data, user):
     models = {}
-    for metric_type in p_data[user]:
-        model = pd.DataFrame(p_data[user][metric_type]).mean().values
+    for metric_type in data[user]:
+        model = pd.DataFrame(data[user][metric_type]).mean().values
         models[metric_type] = model
     return models
 
 
-def get_distance(model, entry, distance_measure):
-    dist = DistanceMetric.get_metric(distance_measure)
+def get_distance(model, entry, d_measure):
+    dist = DistanceMetric.get_metric(d_measure)
     dist = dist.pairwise(model.reshape(1, len(model)), entry)[0]
     return dist
 
 
 def get_eer(distance_user, distance_intruder):
-    # min_d = np.min(distance_user.min(), distance_intruder.min())
-    # max_d = np.max(distance_user.max(), distance_intruder.max())
-    # step_size = (max_d-min_d)/100
-    # for step in np.arange(min_d, max_d, step_size):
-    #     far = distance_user > step
-    #     frr = distance_user <= step
     labels_user = np.zeros(len(distance_user))
     labels_intruder = np.ones(len(distance_intruder))
     labels = np.concatenate([labels_user, labels_intruder])
@@ -101,15 +68,28 @@ def compare_disjunct(data, user="Joel"):
         print("User: {}; Metric: {} > EER: {}".format(user, metric, eer))
 
 
-# def merge_data(p_data):
-#     merged_userdata = {}
-#     for user in p_data:
-#         merged_metrics = []
-#         for i, d in enumerate(p_data[user]["hold_time"]):
-#             unified = np.concatenate([p_data[user]["hold_time"][i], p_data[user]["press_press"][i], p_data[user]["release_press"][i], p_data[user]["release_release"][i]])
-#             merged_metrics.append(unified)
-#         merged_userdata[user] = np.array(merged_metrics)
-#     return merged_userdata
+def merge_data_with_split(data, split_off=0, random_split=False, metrics_tu=None):
+    if metrics_tu is None:
+        metrics_tu = ['hold_time', 'press_press', 'release_press', 'release_release']
+    merged_userdata = {}
+    for user in data:
+        merged_metrics = []
+        for m_tu in metrics_tu:
+            if not merged_metrics:
+                merged_metrics = data[user][m_tu]
+            else:
+                merged_metrics = list(map(np.concatenate, zip(merged_metrics, data[user][m_tu])))
+        if random_split:
+            random.shuffle(merged_metrics)
+        merged_userdata[user] = np.array(merged_metrics)
+    merged_testdata = {}
+    for user in merged_userdata:
+        o_size = len(merged_userdata[user])
+        merged_testdata[user] = merged_userdata[user][:split_off]
+        merged_userdata[user] = merged_userdata[user][split_off:]
+        if o_size != len(merged_testdata[user]) + len(merged_userdata[user]):
+            print("ERROR: Splitting merged data resulted in length mismatch > Check dimensions of used data")
+    return merged_userdata, merged_testdata
 
 
 def compare_unified(data_unmerged, user="Joel"):
@@ -132,38 +112,68 @@ def compare_unified(data_unmerged, user="Joel"):
     print("User: {}; Metric: {} > EER: {}".format(user, "Merged", eer))
 
 
-def merge_data_with_split(p_data, split_off=0, random_split=False):
-    merged_userdata = {}
-    for user in p_data:
-        merged_metrics = []
-        for i, d in enumerate(p_data[user]["hold_time"]):
-            unified = np.concatenate([p_data[user]["hold_time"][i], p_data[user]["press_press"][i], p_data[user]["release_press"][i], p_data[user]["release_release"][i]])
-            merged_metrics.append(unified)
-        merged_userdata[user] = np.array(merged_metrics)
-    merged_unknown_userdata = {}
-    for user in merged_userdata:
-        o_size = len(merged_userdata[user])
-        merged_unknown_userdata[user] = merged_userdata[user][:split_off]
-        merged_userdata[user] = merged_userdata[user][split_off:]
-        if o_size != len(merged_unknown_userdata[user]) + len(merged_userdata[user]):
-            print("ERROR: Splitting merged data resulted in length mismatch > Check dimensions of used data")
-    return merged_userdata, merged_unknown_userdata
+def estimate_single_user(models, entry, d_measure):
+    distances = {}
+    for user in models:
+        distances[user] = get_distance(models[user], entry.reshape(1, len(entry)), d_measure)
+    determined_user, min_distance = min(distances.items(), key=lambda dist: dist[1])
+    print(min_distance)
+    return determined_user
 
 
-def get_user(data_unmerged):
-    data = merge_data_with_split(data_unmerged, split_off=5)
+def get_user(data_unmerged, split_off, random_split, metrics_tu, d_measure):
+    model_data, test_data = merge_data_with_split(data_unmerged, split_off, random_split, metrics_tu)
 
-    models = {
-        "Joel": produce_merged_model(data, "Joel"),
-        "Alan": produce_merged_model(data, "Alan"),
-        "Giancarlo": produce_merged_model(data, "Giancarlo"),
-        "Natasha": produce_merged_model(data, "Natasha")
-    }
+    models = {}
+    correct_est = 0
+    false_est = 0
+    for user in model_data:
+        models[user] = produce_merged_model(model_data, user)
+
+    for user in test_data:
+        for entry in test_data[user]:
+            est_user = estimate_single_user(models, entry, d_measure)
+            if est_user == user:
+                correct_est += 1
+            else:
+                false_est += 1
+    print(correct_est)
+    print(false_est)
+
+
+# Method to use for online keylogging
+# Input: - One keylogged line corresponding to 'The quick brown fox jumps over the lazy dog.'
+# - The username of the tipper
+def get_user_online():
+    data = get_processed_data()
+    data.pop("Russian_or_Chinese_hacker")
 
 
 if __name__ == '__main__':
-    p_data = get_processed_data()
-    compare_unified(p_data)
+    # Parameters
+    to_run = "offline_user_detection"
+    on_model = "Joel"  # Only necessary for compare unified/disjunct
+    nmbr_test_data = 10
+    random_test_sampling = True
+    metrics_to_use = ['hold_time']
+    distance_measure = "manhattan"  # 'manhattan' or 'euclidean'
 
-    #get_user(p_data)
+    # Data
+    u_data = get_processed_data()
+    u_data.pop("Russian_or_Chinese_hacker")
+
+    # Analysis
+    if to_run == "unified":
+        compare_unified(u_data, on_model)
+    elif to_run == "disjunct":
+        compare_disjunct(u_data, on_model)
+    elif to_run == "offline_user_detection":
+        get_user(u_data, nmbr_test_data, random_test_sampling, metrics_to_use, distance_measure)
+
     print("Finished")
+
+# TODO: Determine possible distance threshold for outsider class
+# TODO: Make compare unified realistic
+# TODO: Move prints to main method
+
+# TODO: Produce some kind of plot
