@@ -3,22 +3,25 @@ import os
 import pandas as pd
 
 
-def pretty_case(item):
+def pretty_case(item, mode=None):
     resulting_string = ""
     for event in item:
         if event[2].endswith("PRESS"):
-            resulting_string += event[1][2] if event[1].endswith("'") else " "
+            if mode == 2:
+                resulting_string += getCharFromKeyCode(event[1])
+            else:
+                resulting_string += event[1][2] if event[1].endswith("'") else " "
     return resulting_string
 
 
-def item_is_correct(item):
-    return pretty_case(item).casefold() == "the quick brown fox jumps over the lazy dog.".casefold()
+def item_is_correct(item, mode=None):
+    return pretty_case(item, mode).casefold() == "the quick brown fox jumps over the lazy dog.".casefold()
 
 
 def delete_special_keys(item):
     new_item = []
     for event in item:
-        if event[1].startswith(" Key") and not event[1].endswith("space"):
+        if (str(event[1]).startswith(" Key") or str(event[1]).startswith("Key"))  and not str(event[1]).endswith("space"):
             continue
         new_item.append(event)
     return new_item
@@ -62,7 +65,7 @@ def get_event_array(data, event):
     return press_press_diff
 
 
-def get_hold_time_array(data):
+def get_hold_time_array(data, mode=None):
     hold_time_array = []
     for i in range(len(data) - 1):
         key_pressed = data[i]
@@ -71,7 +74,10 @@ def get_hold_time_array(data):
         key_pressed_timestamp = int(key_pressed[0])
         for j in range(i + 1, len(data)):
             key_released = data[j]
-            if key_pressed[1].casefold() == key_released[1].casefold() and key_released[2].endswith("RELEASE"):
+            key_pressed_check = key_pressed[1] if mode is None else getCharFromKeyCode(key_pressed[1])
+            key_released_check = key_released[1] if mode is None else getCharFromKeyCode(key_released[1])
+            condition = key_pressed_check.casefold() == key_released_check.casefold() and key_released[2].endswith("RELEASE")
+            if condition:
                 key_released_timestamp = int(key_released[0])
                 hold_time_array.append(key_released_timestamp - key_pressed_timestamp)
                 break
@@ -109,6 +115,9 @@ def count_backspace(data):
         if data[i][1].endswith("Key.backspace") and data[i][2].endswith("PRESS"):
             count += 1
     return count
+
+def getCharFromKeyCode(keyCode):
+    return keyCode.char if str(keyCode).endswith("'") else " "
 
 
 def get_processed_data():

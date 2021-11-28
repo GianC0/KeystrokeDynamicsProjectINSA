@@ -1,7 +1,7 @@
 import matplotlib.pyplot as matp
 import matplotlib as mpl
 import data_processer as dp
-
+# TODO: @Alan make plots bigger so that at least something is...
 
 mpl.rcParams['figure.dpi'] = 300
 users = {"Giancarlo": (0, 0), "Alan": (0, 1), "Joel": (1, 0), "Natasha": (1, 1)}

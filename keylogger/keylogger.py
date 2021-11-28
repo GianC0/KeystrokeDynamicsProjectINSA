@@ -4,24 +4,29 @@ import logging
 import time
 from datetime import datetime
 import sys
+import data_processer
 
+mode = 0 # undefined mode
 data = []
-dynamic_array = []
+array_of_single_line = []
 line = 1
 logger = None
 
+
 # The quick brown fox jumps over the lazy dog.
 def on_press(key):
-    global data, dynamic_array
+    global data, array_of_single_line
     if key == keyboard.Key.esc:
         return False
     if key == keyboard.Key.enter:
-        data.append(dynamic_array.copy())
-        dynamic_array.clear()
+        if mode == 2:
+            return False
+        data.append(array_of_single_line.copy())
+        array_of_single_line.clear()
     else:
         timestamp = int(round(time.time() * 1000))
         action = "PRESS"
-        dynamic_array.append([timestamp, key, action])
+        array_of_single_line.append([timestamp, key, action])
         # print(dynamic_array)
     # logging.info(str(int(round(time.time() * 1000))) + " PRESS " + str(key))
 
@@ -29,12 +34,14 @@ def on_press(key):
 def on_release(key):
     global line
     if key == keyboard.Key.enter:
+        if mode == 2:
+            return False
         print(f"\n{line}", end=" ")
         line += 1
     else:
         timestamp = int(round(time.time() * 1000))
         action = "RELEASE"
-        dynamic_array.append([timestamp, key, action])
+        array_of_single_line.append([timestamp, key, action])
         # print(dynamic_array)
     # logging.info(str(int(round(time.time() * 1000))) + " RELEASE " + str(key))
 
@@ -60,45 +67,75 @@ def initLogging(filename):
 
 
 print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿      CHOOSE YOUR POKEMON         ⣿⣿⣿⣿⣿⣿⣿")
+print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿         CHOOSE MODE         ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
 print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-print("⣿ 1 - Alan                                  ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-print("⣿ 2 - Natasha                               ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-print("⣿ 3 - Joel                                  ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-print("⣿ 4 - Giancarlo                             ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-print("⣿ 5 - Russian or Chinese hacker             ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-print("""⣿⣿⣿⣿⣿⡏⠉⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⠀⠀⠀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⠉⠁⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣧⡀⠀⠀⠀⠀⠙⠿⠿⠿⠻⠿⠿⠟⠿⠛⠉⠀⠀⠀⠀⠀⣸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣷⣄⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⡟⠀⠀⢰⣹⡆⠀⠀⠀⠀⠀⠀⣭⣷⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠈⠉⠀⠀⠤⠄⠀⠀⠀⠉⠁⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⢾⣿⣷⠀⠀⠀⠀⡠⠤⢄⠀⠀⠀⠠⣿⣿⣷⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⡀⠉⠀⠀⠀⠀⠀⢄⠀⢀⠀⠀⠀⠀⠉⠉⠁⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿""")
-print()
+print("⣿ 1 - Collect more data                           ⣿⣿⣿⣿")
+print("⣿ 2 - Test our amazing user detection algorithm   ⣿⣿⣿⣿")
+print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
 
-nr = input()
+mode = int(input())
+while not mode in range(1, 3):
+    mode = int(input())
+    print("⣿ Pleas only use a mode from the list :( ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
 
-pokemons = ["Alan", "Natasha", "Joel", "Giancarlo", "Russian_or_Chinese_hacker"]
+if mode == 1:
+    print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
+    print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿      CHOOSE YOUR POKEMON         ⣿⣿⣿⣿⣿⣿⣿")
+    print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
+    print("⣿ 1 - Alan                                  ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
+    print("⣿ 2 - Natasha                               ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
+    print("⣿ 3 - Joel                                  ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
+    print("⣿ 4 - Giancarlo                             ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
+    print("⣿ 5 - Russian or Chinese hacker             ⣿⣿⣿⣿⣿⣿⣿⣿⣿")
+    print("""⣿⣿⣿⣿⣿⡏⠉⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⠀⠀⠀⠈⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⠉⠁⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⣧⡀⠀⠀⠀⠀⠙⠿⠿⠿⠻⠿⠿⠟⠿⠛⠉⠀⠀⠀⠀⠀⣸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⣿⣷⣄⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⣿⣿⡟⠀⠀⢰⣹⡆⠀⠀⠀⠀⠀⠀⣭⣷⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠈⠉⠀⠀⠤⠄⠀⠀⠀⠉⠁⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⣿⣿⢾⣿⣷⠀⠀⠀⠀⡠⠤⢄⠀⠀⠀⠠⣿⣿⣷⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⣿⣿⡀⠉⠀⠀⠀⠀⠀⢄⠀⢀⠀⠀⠀⠀⠉⠉⠁⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    ⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿""")
+    print()
 
-pokemon = pokemons[int(nr) - 1]
-log_dir = "CollectedData/" + pokemon + "/"
+    nr = 0
+    while not nr in range(1, 6):
+        nr = input()
+        print("⣿ Pleas only use a pokemon from the list :( ⣿⣿⣿⣿")
 
+    pokemons = ["Alan", "Natasha", "Joel", "Giancarlo", "Russian_or_Chinese_hacker"]
 
-with Listener(on_press=on_press, on_release=on_release) as listener:
-    listener.join()
+    pokemon = pokemons[int(nr) - 1]
+    log_dir = "CollectedData/" + pokemon + "/"
+    temp_dir = "Temp/"
 
-i = 0
-for array in data:
-    log_timestamp = datetime.now().strftime("%d-%m-%Y_%Hh%Mm%Ss")
-    initLogging(log_dir + log_timestamp + str(i) + ".csv")
-    i += 1
-    start_timestamp = array[0][0]
-    for item in array:
-        item[0] -= start_timestamp
-        # log = [str(item[0]), str(item[1]), item[2]]
-        logging.info(str(item[0]) + ', ' + str(item[1]) + ', ' + item[2])
+    with Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
+
+    i = 0
+    for array in data:
+        log_timestamp = datetime.now().strftime("%d-%m-%Y_%Hh%Mm%Ss")
+        initLogging(log_dir + log_timestamp + str(i) + ".csv")
+        i += 1
+        start_timestamp = array[0][0]
+        for item in array:
+            item[0] -= start_timestamp
+            # log = [str(item[0]), str(item[1]), item[2]]
+            logging.info(str(item[0]) + ', ' + str(item[1]) + ', ' + item[2])
+else:
+    password_correct = False
+    while not password_correct:
+        array_of_single_line.clear()
+        print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿ Please type in the password ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n")
+        with Listener(on_press=on_press, on_release=on_release) as listener:
+            listener.join()
+        cleaned_data = data_processer.delete_special_keys(array_of_single_line)
+        password_correct = data_processer.item_is_correct(cleaned_data, mode=mode)
+
+    cleaned_time = data_processer.update_time(cleaned_data)
+    hold_time = data_processer.get_hold_time_array(cleaned_time, mode=mode)
+    print(hold_time)
+
 
