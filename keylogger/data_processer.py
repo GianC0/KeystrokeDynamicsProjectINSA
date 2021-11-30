@@ -85,14 +85,16 @@ def get_hold_time_array(data, mode=None):
     return hold_time_array
 
 
-def get_release_press_array_magically(data):
+def get_release_press_array_magically(data, mode=None):
     release_press_array = []
     for i in range(len(data) - 1):
         key_to_release = data[i]
         if key_to_release[2].endswith("RELEASE"):
             continue
         for j in range(i+1, len(data)):
-            if key_to_release[1].casefold() == data[j][1].casefold() and data[j][2].endswith("RELEASE"):
+            key_to_release_ch = key_to_release[1] if mode is None else getCharFromKeyCode(key_to_release[1])
+            key_to_check_ck = data[j][1] if mode is None else getCharFromKeyCode(data[j][1])
+            if key_to_release_ch.casefold() == key_to_check_ck.casefold() and data[j][2].endswith("RELEASE"):
                 released_key = data[j]
                 break
         char_found = False

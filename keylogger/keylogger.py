@@ -5,6 +5,8 @@ import time
 from datetime import datetime
 import sys
 import data_processer
+import distance_measures
+import numpy as np
 
 mode = 0 # undefined mode
 data = []
@@ -79,6 +81,7 @@ while not mode in range(1, 3):
     print("⣿ Pleas only use a mode from the list :( ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
 
 if mode == 1:
+    # Here we collect new data
     print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
     print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿      CHOOSE YOUR POKEMON         ⣿⣿⣿⣿⣿⣿⣿")
     print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
@@ -125,9 +128,11 @@ if mode == 1:
             # log = [str(item[0]), str(item[1]), item[2]]
             logging.info(str(item[0]) + ', ' + str(item[1]) + ', ' + item[2])
 else:
+    # Here is where we determine the user
     password_correct = False
     while not password_correct:
         array_of_single_line.clear()
+        time.sleep(1)
         print("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿ Please type in the password ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n")
         with Listener(on_press=on_press, on_release=on_release) as listener:
             listener.join()
@@ -136,6 +141,23 @@ else:
 
     cleaned_time = data_processer.update_time(cleaned_data)
     hold_time = data_processer.get_hold_time_array(cleaned_time, mode=mode)
-    print(hold_time)
+    press_press = data_processer.get_event_array(cleaned_time, "PRESS")
+    release_release = data_processer.get_event_array(cleaned_time, "RELEASE")
+    release_press = data_processer.get_release_press_array_magically(cleaned_time, mode=mode)
 
+    # This is the entry, but it doesn't work. It worked just with  distance_measures.get_user_online(np.asarray(hold_time)) though
+    user_to_check = {
+        "user_to_check": {
+            "hold_time": hold_time,
+            "press_press": press_press,
+            "release_release": release_release,
+            "release_press": release_press
+        }
+    }
 
+    result = distance_measures.get_user_online(user_to_check, metrics_tu=['hold_time','press_press','release_release','release_press'])
+    # result = distance_measures.get_user_online(np.asarray(hold_time))
+
+    print(result)
+
+# TODO: just start the keylogger class and choose the mode 2, then type the passwors
