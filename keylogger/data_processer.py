@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import pandas as pd
 import helpers
@@ -104,7 +105,7 @@ def get_release_press_array(data, mode=None):
     return release_press_array
 
 
-def get_processed_data():
+def get_processed_data(to_file=False, file_name=None):
     raw_data = transform_data_to_array()
     data = {}
     for user_key in raw_data:
@@ -144,6 +145,15 @@ def get_processed_data():
         data[user_key]["release_press_df"] = pd.DataFrame(
             data[user_key]["release_press"], columns=inter_keys
         )
+
+    if to_file:
+        # data_to_save = {k: v for k, v in data.items() if not k.endswith('df')}
+        data_to_save = {
+            k_1: {k_2: v_2 for k_2, v_2 in data[k_1].items() if not k_2.endswith("df")}
+            for k_1, v_1 in data.items()
+        }
+        with open(file_name, "w") as file:
+            json.dump(data_to_save, file)
     return data
 
 

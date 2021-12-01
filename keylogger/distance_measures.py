@@ -1,10 +1,11 @@
+import json
 from sklearn import metrics
-
 from data_processer import get_processed_data
 import pandas as pd
 from sklearn.neighbors import DistanceMetric
 import numpy as np
 import random
+
 
 intruder_username = "intruders"
 
@@ -238,7 +239,9 @@ if __name__ == "__main__":
     intruder_distance_threshold = 700
 
     # Data
-    u_data = get_processed_data()
+    #u_data = get_processed_data()
+    with open("data.json", "r") as file:
+        u_data = json.loads(file.read())
     intruder_data = {intruder_username: u_data.pop("Russian_or_Chinese_hacker")}
 
     # Analysis
