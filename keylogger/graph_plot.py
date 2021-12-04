@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import data_processer as dp
+import seaborn as sns
 
 
-mpl.rcParams["figure.figsize"] = (16, 9)
+mpl.rcParams["figure.figsize"] = (15, 10)
+sns.set()
 users = {"Giancarlo": (0, 0), "Alan": (0, 1), "Joel": (1, 0), "Natasha": (1, 1)}
 keys = ["press_press_df", "release_release_df", "release_press_df"]
 raw_data = dp.get_processed_data()
