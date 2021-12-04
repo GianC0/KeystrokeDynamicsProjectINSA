@@ -138,12 +138,10 @@ else:
 
     # This is the entry, but it doesn't work. It worked just with  distance_measures.get_user_online(np.asarray(hold_time)) though
     user_to_check = {
-        "user_to_check": {
-            "hold_time": hold_time,
-            "press_press": press_press,
-            "release_release": release_release,
-            "release_press": release_press,
-        }
+        "hold_time": hold_time,
+        "press_press": press_press,
+        "release_release": release_release,
+        "release_press": release_press,
     }
 
     metrics_tu = [
@@ -154,7 +152,7 @@ else:
     ]  # Change this to select used metrics
     entry = []
     for metric in metrics_tu:
-        entry = np.concatenate([entry, user_to_check["user_to_check"][metric]])
+        entry = np.concatenate([entry, user_to_check[metric]])
     result = distance_measures.get_user_online(entry, metrics_tu=metrics_tu)
 
     print(result)
