@@ -283,8 +283,3 @@ if __name__ == "__main__":
         print("Mean distance of user entries: {}".format(mean_user_dist))
         print("Mean distance of intruder entries: {}".format(mean_intruder_dist))
     print("Finished")
-
-# TODO: Determine possible distance threshold for outsider class
-# TODO: Make compare unified realistic
-
-# TODO: Produce some kind of plot
