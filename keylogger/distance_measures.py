@@ -105,8 +105,8 @@ def merge_data_with_split(data, split_off=0, random_split=False, metrics_tu=None
     return merged_userdata, merged_testdata
 
 
-def compare_unified(data_unmerged, user="Joel"):
-    data, _ = merge_data_with_split(data_unmerged)
+def compare_unified(data_unmerged, split_off, random_split, user):
+    data, _ = merge_data_with_split(data_unmerged, split_off=split_off, random_split=random_split)
     model = produce_merged_model(data, user)
 
     distances_user = None
@@ -246,9 +246,9 @@ if __name__ == "__main__":
 
     # Analysis
     if to_run == "unified":
-        compare_unified(u_data, on_model)
+        compare_unified(u_data, nmbr_test_data, random_test_sampling, on_model)
     elif to_run == "disjunct":
-        compare_disjunct(u_data, on_model)
+        compare_disjunct(u_data, on_model)  # This method was used to test the data but uses bad methology.
     elif to_run == "offline_user_detection":
         (
             correct_user_est,
@@ -286,6 +286,5 @@ if __name__ == "__main__":
 
 # TODO: Determine possible distance threshold for outsider class
 # TODO: Make compare unified realistic
-# TODO: Move prints to main method
 
 # TODO: Produce some kind of plot
