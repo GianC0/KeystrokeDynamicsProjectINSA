@@ -159,7 +159,7 @@ else:
     entry = []
     for metric in metrics_tu:
         entry = np.concatenate([entry, user_to_check["user_to_check"][metric]])
-    result = distance_measures.get_user_online(entry, metrics_tu=metrics_tu)
+    result = distance_measures.get_user_online(entry, intruder_threshold=100000, metrics_tu=metrics_tu)
 
     print(result)
 
