@@ -1,82 +1,64 @@
 import csv
+import json
 import os
 import pandas as pd
+import helpers
 
 
-def pretty_case(item, mode=None):
-    resulting_string = ""
-    for event in item:
-        if event[2].endswith("PRESS"):
-            if mode == 2:
-                resulting_string += getCharFromKeyCode(event[1])
-            else:
-                resulting_string += event[1][2] if event[1].endswith("'") else " "
-    return resulting_string
-
-
-def item_is_correct(item, mode=None):
-    return pretty_case(item, mode).casefold() == "the quick brown fox jumps over the lazy dog.".casefold()
-
-
-def delete_special_keys(item):
-    new_item = []
-    for event in item:
-        if (str(event[1]).startswith(" Key") or str(event[1]).startswith("Key"))  and not str(event[1]).endswith("space"):
-            continue
-        new_item.append(event)
-    return new_item
-
-
-def update_time(item):
-    start_time = int(item[0][0])
-    for event in item:
-        new_time = int(event[0]) - start_time
-        event[0] = new_time
-    return item
-
-
+# Format of the output
+# { "user": [ attempt := [ entry := [time := int, key := Key, event := str] ] ]
 def transform_data_to_array():
     all_data = {}
     for folder in os.listdir("CollectedData/"):
         path = "CollectedData/" + folder + "/"
-        pokemon_data = []
+        single_data = []
         for file in os.listdir(path):
-            with open(path + file) as csvfile:
-                pokemon_item = list(csv.reader(csvfile))
-                pokemon_item = delete_special_keys(pokemon_item)
-                pokemon_item = update_time(pokemon_item)
-                if item_is_correct(pokemon_item):
-                    pokemon_data.append(pokemon_item)
-        all_data[folder] = pokemon_data
-    return all_data  # Format: {user: collected_data}, collected_data: [experiment], experiment: [data_sample], data_sample: [timestamp, character, action]
+            with open(path + file) as csv_file:
+                attempt = list(csv.reader(csv_file))
+                attempt = helpers.delete_special_keys(attempt)
+                attempt = helpers.update_time(attempt)
+                if helpers.attempt_is_correct(attempt):
+                    single_data.append(attempt)
+        all_data[folder] = single_data
+    return all_data
 
 
-def get_event_array(data, event):
-    press_pres_keys = []
-    for key_info in data:
-        if key_info[2].endswith(event):
-            press_pres_keys.append(key_info)
-    press_press_diff = []
-    for i in range(1, len(press_pres_keys)):
-        aft = int(press_pres_keys[i][0])
-        pre = int(press_pres_keys[i - 1][0])
-        press_press_diff.append(aft - pre)
+def get_event_array(attempt, event):
+    event_keys = []
+    for entry in attempt:
+        if entry[2].endswith(event):
+            event_keys.append(entry)
+    event_diff = []
+    for i in range(1, len(event_keys)):
+        aft = int(event_keys[i][0])
+        pre = int(event_keys[i - 1][0])
+        event_diff.append(aft - pre)
+    return event_diff
 
-    return press_press_diff
 
-
-def get_hold_time_array(data, mode=None):
+def get_hold_time_array(attempt, mode=None):
     hold_time_array = []
-    for i in range(len(data) - 1):
-        key_pressed = data[i]
+    for i in range(len(attempt) - 1):
+        key_pressed = attempt[i]
         if key_pressed[2].endswith("RELEASE"):
             continue
         key_pressed_timestamp = int(key_pressed[0])
-        for j in range(i + 1, len(data)):
-            key_released = data[j]
-            key_pressed_check = key_pressed[1] if mode is None else getCharFromKeyCode(key_pressed[1])
-            key_released_check = key_released[1] if mode is None else getCharFromKeyCode(key_released[1])
-            condition = key_pressed_check.casefold() == key_released_check.casefold() and key_released[2].endswith("RELEASE")
+        for j in range(i + 1, len(attempt)):
+            key_released = attempt[j]
+            key_pressed_check = (
+                key_pressed[1]
+                if mode is None
+                else helpers.get_char_from_key_code(key_pressed[1])
+            )
+            key_released_check = (
+                key_released[1]
+                if mode is None
+                else helpers.get_char_from_key_code(key_released[1])
+            )
+            condition = (
+                key_pressed_check.casefold() == key_released_check.casefold()
+                and key_released[2].endswith("RELEASE")
+            )
             if condition:
                 key_released_timestamp = int(key_released[0])
                 hold_time_array.append(key_released_timestamp - key_pressed_timestamp)
@@ -85,16 +67,28 @@ def get_hold_time_array(data, mode=None):
     return hold_time_array
 
 
-def get_release_press_array_magically(data, mode=None):
+def get_release_press_array(data, mode=None):
     release_press_array = []
     for i in range(len(data) - 1):
         key_to_release = data[i]
         if key_to_release[2].endswith("RELEASE"):
             continue
-        for j in range(i+1, len(data)):
-            key_to_release_ch = key_to_release[1] if mode is None else getCharFromKeyCode(key_to_release[1])
-            key_to_check_ck = data[j][1] if mode is None else getCharFromKeyCode(data[j][1])
-            if key_to_release_ch.casefold() == key_to_check_ck.casefold() and data[j][2].endswith("RELEASE"):
+        released_key = None
+        next_pressed_key = None
+        for j in range(i + 1, len(data)):
+            key_to_release_ch = (
+                key_to_release[1]
+                if mode is None
+                else helpers.get_char_from_key_code(key_to_release[1])
+            )
+            key_to_check_ck = (
+                data[j][1]
+                if mode is None
+                else helpers.get_char_from_key_code(data[j][1])
+            )
+            if key_to_release_ch.casefold() == key_to_check_ck.casefold() and data[j][
+                2
+            ].endswith("RELEASE"):
                 released_key = data[j]
                 break
         char_found = False
@@ -111,54 +105,63 @@ def get_release_press_array_magically(data, mode=None):
     return release_press_array
 
 
-def count_backspace(data):
-    count = 0
-    for i in range(len(data)):
-        if data[i][1].endswith("Key.backspace") and data[i][2].endswith("PRESS"):
-            count += 1
-    return count
-
-def getCharFromKeyCode(keyCode):
-    return keyCode.char if str(keyCode).endswith("'") else " "
-
-
-def get_processed_data():
+def get_processed_data(to_file=False, file_name=None):
     raw_data = transform_data_to_array()
-    processed_data = {}
-    for user in raw_data:
-        processed_data[user] = {
-            "hold_time": [],
-            "press_press": [],
-            "release_press": [],
-            "release_release": [],
-            "raw_data": []
+    data = {}
+    for user_key in raw_data:
+        data[user_key] = {
+            "hold_time": list(),
+            "press_press": list(),
+            "release_press": list(),
+            "release_release": list(),
+            "raw_data": list(),
         }
-        for collected_data in raw_data[user]:
-            processed_data[user]["press_press"].append(get_event_array(collected_data, "PRESS"))
-            processed_data[user]["release_release"].append(get_event_array(collected_data, "RELEASE"))
-            processed_data[user]["hold_time"].append(get_hold_time_array(collected_data))
-            processed_data[user]["release_press"].append(get_release_press_array_magically(collected_data))
-            processed_data[user]["raw_data"].append(collected_data)
-        keys_pressed = list("the quick brown fox jumps over the lazy dog.")
-        inter_keys = ["t-h", "h-e", "e- ", " -q", "q-u", "u-i", "i-c", "c-k", "k- ", " -b", "b-r", "r-o", "o-w", "w-n", "n- ", " -f", "f-o", "o-x", "x- ", " -j", "j-u", "u-m", "m-p", "p-s", "s- ", " -o", "o-v", "v-e", "e-r", "r- ", " -t", "t-h", "h-e", "e- ", " -l", "l-a", "a-z", "z-y", "y- ", " -d", "d-o", "o-g", "g-."]
-        processed_data[user]["hold_time_df"] = pd.DataFrame(processed_data[user]["hold_time"], columns=keys_pressed)
-        processed_data[user]["press_press_df"] = pd.DataFrame(processed_data[user]["press_press"], columns=inter_keys)
-        processed_data[user]["release_release_df"] = pd.DataFrame(processed_data[user]["release_release"], columns=inter_keys)
-        processed_data[user]["release_press_df"] = pd.DataFrame(processed_data[user]["release_press"], columns=inter_keys)
-    return processed_data
+        for collected_data in raw_data[user_key]:
+            data[user_key]["press_press"].append(
+                get_event_array(collected_data, "PRESS")
+            )
+            data[user_key]["release_release"].append(
+                get_event_array(collected_data, "RELEASE")
+            )
+            data[user_key]["hold_time"].append(get_hold_time_array(collected_data))
+            data[user_key]["release_press"].append(
+                get_release_press_array(collected_data)
+            )
+            data[user_key]["raw_data"].append(collected_data)
+        keys_pressed = list(helpers.PHRASE)
+        inter_keys = [
+            f"{helpers.PHRASE[i]}-{helpers.PHRASE[i + 1]}"
+            for i in range(len(helpers.PHRASE) - 1)
+        ]
+        data[user_key]["hold_time_df"] = pd.DataFrame(
+            data[user_key]["hold_time"], columns=keys_pressed
+        )
+        data[user_key]["press_press_df"] = pd.DataFrame(
+            data[user_key]["press_press"], columns=inter_keys
+        )
+        data[user_key]["release_release_df"] = pd.DataFrame(
+            data[user_key]["release_release"], columns=inter_keys
+        )
+        data[user_key]["release_press_df"] = pd.DataFrame(
+            data[user_key]["release_press"], columns=inter_keys
+        )
+
+    if to_file:
+        # data_to_save = {k: v for k, v in data.items() if not k.endswith('df')}
+        data_to_save = {
+            k_1: {k_2: v_2 for k_2, v_2 in data[k_1].items() if not k_2.endswith("df")}
+            for k_1, v_1 in data.items()
+        }
+        with open(file_name, "w") as file:
+            json.dump(data_to_save, file)
+    return data
 
 
 if __name__ == "__main__":
     processed_data = get_processed_data()
     total = 0
     for user in processed_data:
-        user_total = 0
         print(user)
-        for item in processed_data[user]:
-            print(f"\t{item}:", end=" ")
-            for case in processed_data[user][item]:
-                print(len(case), end=", ")
-            print("\b\b")
         user_total = len(processed_data[user]["raw_data"])
         print(f"\tTotal cases: {user_total}")
         total += user_total
