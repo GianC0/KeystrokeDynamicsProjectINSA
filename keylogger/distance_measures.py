@@ -46,7 +46,7 @@ def get_eer(distance_user, distance_intruder):
     eer2 = fnr[np.nanargmin(np.absolute((fnr - fpr)))]
     if np.absolute(eer1 - eer2) > 0.01:
         print("ERROR eer1: {} and eer2: {} diverging".format(eer1, eer2))
-    return eer1
+    return eer2
 
 
 def compare_disjunct(data, user="Joel"):
@@ -105,14 +105,14 @@ def merge_data_with_split(data, split_off=0, random_split=False, metrics_tu=None
     return merged_userdata, merged_testdata
 
 
-def compare_unified(data_unmerged, split_off, random_split, user):
-    data, _ = merge_data_with_split(data_unmerged, split_off=split_off, random_split=random_split)
+def compare_unified(data_unmerged, split_off, random_split, metrics_tu, d_measure, user):
+    data, _ = merge_data_with_split(data_unmerged, split_off=split_off, random_split=random_split, metrics_tu=metrics_tu)
     model = produce_merged_model(data, user)
 
     distances_user = None
     distances_intruder = []
     for user_d in data:
-        distance = get_distance(model, data[user_d], "manhattan")
+        distance = get_distance(model, data[user_d], d_measure)
         if user_d == user:
             distances_user = distance
         else:
@@ -231,9 +231,9 @@ def get_user_online(
 if __name__ == "__main__":
     # Parameters
     to_run = "offline_user_detection"
-    on_model = "Joel"  # Only necessary for compare unified/disjunct
+    on_model = "Natasha"  # Only necessary for compare unified/disjunct
     nmbr_test_data = 10
-    random_test_sampling = True
+    random_test_sampling = False
     metrics_to_use = ["hold_time"]
     distance_measure = "manhattan"  # 'manhattan' or 'euclidean'
     intruder_distance_threshold = 700
@@ -246,7 +246,7 @@ if __name__ == "__main__":
 
     # Analysis
     if to_run == "unified":
-        compare_unified(u_data, nmbr_test_data, random_test_sampling, on_model)
+        compare_unified(u_data, nmbr_test_data, random_test_sampling, metrics_to_use, distance_measure, on_model)
     elif to_run == "disjunct":
         compare_disjunct(u_data, on_model)  # This method was used to test the data but uses bad methology.
     elif to_run == "offline_user_detection":
