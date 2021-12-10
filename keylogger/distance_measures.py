@@ -106,8 +106,8 @@ def merge_data_with_split(data, split_off=0, random_split=False, metrics_tu=None
 
 
 def compare_unified(data_unmerged, split_off, random_split, metrics_tu, d_measure, user):
-    data, _ = merge_data_with_split(data_unmerged, split_off=split_off, random_split=random_split, metrics_tu=metrics_tu)
-    model = produce_merged_model(data, user)
+    data_m, data = merge_data_with_split(data_unmerged, split_off=split_off, random_split=random_split, metrics_tu=metrics_tu)
+    model = produce_merged_model(data_m, user)
 
     distances_user = None
     distances_intruder = []
@@ -117,7 +117,6 @@ def compare_unified(data_unmerged, split_off, random_split, metrics_tu, d_measur
             distances_user = distance
         else:
             distances_intruder = np.concatenate([distances_intruder, distance])
-        # print("{}; {}; {} > {}".format(user_m, user_d, metric, distance.mean()))
     print(len(distances_user))
     print(distances_user.mean())
     print(len(distances_intruder))
@@ -230,8 +229,8 @@ def get_user_online(
 
 if __name__ == "__main__":
     # Parameters
-    to_run = "offline_user_detection"
-    on_model = "Natasha"  # Only necessary for compare unified/disjunct
+    to_run = "unified"
+    on_model = "Joel"  # Only necessary for compare unified/disjunct
     nmbr_test_data = 10
     random_test_sampling = False
     metrics_to_use = ["hold_time"]
