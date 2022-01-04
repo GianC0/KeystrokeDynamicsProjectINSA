@@ -1,3 +1,28 @@
+Our Project Material:
+
 Video Presentation: https://drive.google.com/drive/folders/1YZB_4NDeELxA-h9f8wmu-nyQX_uMI7Ym?usp=sharing
 Notebook: https://colab.research.google.com/drive/1hNKo7KyTxpRPF0DA9jCyfonyOmjoRmOc?usp=sharing
 Slides: https://docs.google.com/presentation/d/13XE6sOFsfQOJbgsO-QrLflCb4fMwom2y2EkqXjg8ASw/edit?usp=sharing
+
+
+
+This project is about Keystroke dynamics.
+We will study this field through a data science approach, say, data mining and knowledge discovery.
+Keystroke dynamics is about how one's pressing and releasing keys of a keyboard.
+Think about a melody when you type: raw data are the music score. The score is composed of the basic notes (keys or letters you have to type) but also the variations, that is, the way you play the music, making you almost unique: all piano players play the same score but in different ways, making them unique.
+
+Let's go back to our keyboards. Keystroke dynamics can be used as a soft biometric authentication procedure.
+Indeed, if the way you hit keys is almost unique, a security administrator can set up an AI routine examining your traces and being alerting if your behavior is not usual, say, not matching a profile previously recorded. 
+
+The task is not easy, and even not always possible! You may wonder if the authentication would still work if you are sick, using a different keyboards than usual, stressed, etc. 
+
+The project is about setting up from scratch such an authentication procedure and studying if/how it works, what are the main parameters, what makes a profile, a signature, etc.
+
+For that matter,our group has followed this methodology: 
+
+    Data acquisition: we wrote our keylogger and built our dataset. We have also used a benchmark dataset available online.
+    Scientific bibliography: we studied the basics of keystroke dynamics.
+    Data exploration and data science task definition: we explored the data; we built basic statistics and plotted the data in different ways to get insights.
+    Data mining: for helping us findinding frequent patterns to run our study on.
+    Machine learning: build and evaluate the model for the prediction task.
+    Authentication set up and evaluation
